@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 
 # Toppra imports
@@ -79,17 +79,18 @@ class ToppraTrajectory():
             gridpoints = np.linspace(0, path.duration, num_grid_points)
         else:
             gridpoints = np.linspace(0, path.duration, req.n_gridpoints)
-        instance = algo.TOPPRA([pc_vel, pc_acc], path, gridpoints=gridpoints, solver_wrapper='seidel')
+
+        instance = algo.TOPPRA([pc_vel, pc_acc], path,solver_wrapper='seidel', parametrizer="ParametrizeConstAccel")
 
         # Retime the trajectory, only this step is necessary.
         t0 = time.time()
-        jnt_traj, aux_traj = instance.compute_trajectory(0, 0)
+        jnt_traj = instance.compute_trajectory(0,0)
         #print("Parameterization time: {:} secs".format(time.time() - t0))
 
         # Plot for debugging
         if req.plot == True:
             print("Parameterization time: {:} secs".format(time.time() - t0))
-            ts_sample = np.linspace(0, jnt_traj.get_duration(), 100)
+            ts_sample = np.linspace(0, jnt_traj.duration, 100)
             qs_sample = jnt_traj.eval(ts_sample)
             qds_sample = jnt_traj.evald(ts_sample)
             qdds_sample = jnt_traj.evaldd(ts_sample)
@@ -131,13 +132,14 @@ class ToppraTrajectory():
         self.raw_trajectory_pub.publish(res.trajectory)
         self.raw_waypoints_pub.publish(req.waypoints)
         print("Time elapsed: ", time.time()-tstart)
+        #print(res)
         return res
 
     def TOPPRA2JointTrajectory(self, jnt_traj, f):
         # Sampling frequency is required to get the time samples correctly.
         # The number of points in ts_sample is duration*frequency.
-        ts_sample = np.linspace(0, jnt_traj.get_duration(), 
-            int(jnt_traj.get_duration()*f))
+        ts_sample = np.linspace(0, jnt_traj.duration, 
+            int(jnt_traj.duration*f))
         # Sampling. This returns a matrix for all DOFs. Accessing specific one is 
         # simple: qs_sample[:, 0]
         qs_sample = jnt_traj.eval(ts_sample)
